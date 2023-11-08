@@ -37,6 +37,7 @@ unsigned int logIndex;
 
 bool isLogging = false;
 bool isLaunched = false;
+bool isLanded = false;
 
 int positionX[LOG_LENGTH];
 int positionY[LOG_LENGTH];
@@ -63,6 +64,11 @@ void loop() {
     // the rocket has launched
     isLaunched = true;
     position = Vector(0, 0, 0);
+    beginLogging();
+  } else if (isLaunched == true && isLanded == false && velocity.x > -1 && velocity.x < 1) {
+    // the rocket has landed
+    isLanded = true;
+    endLogging();
   }
   
   struct Vector angularV = getAngularVel();
@@ -86,6 +92,9 @@ void loop() {
 void beginLogging() {
   isLogging = true;
   lastLogTime = time;
+}
+void endLogging() {
+  isLogging = false;
 }
 
 void logPositionAngle(Vector position, Vector angle) {
@@ -120,28 +129,13 @@ void setDrag(float ratio) {
 }
 
 struct Vector getAcceleration() {
-  // TODO: get acceleration from the accelerometer
-  return Vector(mpu.GetAccX(), mpu.GetAccY(), mpu.GetAccZ());
-}
-
-
-struct Vector getVelocity() {
-  // TODO: get acceleration from the accelerometer
-  return Vector(mpu.GetAccX(), mpu.GetAccY(), mpu.GetAccZ());
-}
-
-
-struct Vector getPosition() {
-  // TODO: get acceleration from the accelerometer
   return Vector(mpu.GetAccX(), mpu.GetAccY(), mpu.GetAccZ());
 }
 
 struct Vector getAngularVel() {
-  // TODO: get angular velocity from the accelerometer
   return Vector(mpu.GetGyroX(), mpu.GetGyroY(), mpu.GetGyroZ());
 }
 
 struct Vector getAngularPos() {
-  // TODO: get angular velocity from the accelerometer
   return Vector(mpu.GetAngX(), mpu.GetAngY(), mpu.GetAngZ()); 
 }
