@@ -103,11 +103,13 @@ void loop() {
   time = newTime;
 }
 
+// Sets the servo angles based on a height delta.
 void setServoAngles(float delta) {
-  a.write(neutralAngleA + max(min(floor(angleMultiplierA * delta), maxAngle), -maxAngle));
-  b.write(neutralAngleB - max(min(floor(angleMultiplierB * delta), maxAngle), -maxAngle));
-  c.write(neutralAngleC + max(min(floor(angleMultiplierC * delta), maxAngle), -maxAngle));
-  d.write(neutralAngleD - max(min(floor(angleMultiplierD * delta), maxAngle), -maxAngle));
+  // Adjacent fins turn in opposite values relative to the servo.
+  a.write(neutralAngleA + max(min(floor(angleMultiplierA * delta), maxAngle), 0));
+  b.write(neutralAngleB - max(min(floor(angleMultiplierB * delta), maxAngle), 0));
+  c.write(neutralAngleC + max(min(floor(angleMultiplierC * delta), maxAngle), 0));
+  d.write(neutralAngleD - max(min(floor(angleMultiplierD * delta), maxAngle), 0));
 }
 
 void beginLogging() {
