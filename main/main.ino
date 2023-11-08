@@ -1,11 +1,26 @@
 #include "vector.h"
-#include "mlp.h"
 #include <Servo.h>
 #include <Arduino.h>
 #include <TinyMPU6050.h>
 
 #define MPU_PIN 2
 #define LOG_LENGTH 128
+
+#define gravity -9.81
+#define targetHeight 250
+#define velocityDelayFactor -1
+
+#define neutralAngleA 90
+#define neutralAngleB 90
+#define neutralAngleC 90
+#define neutralAngleD 90
+
+#define angleMultiplierA 0.01
+#define angleMultiplierB 0.01
+#define angleMultiplierC 0.01
+#define angleMultiplierD 0.01
+
+#define maxAngle 20
 
 Servo a;
 Servo b;
@@ -26,9 +41,6 @@ void setup() {
 }
 struct Vector position = Vector(0, 0, 0);
 struct Vector velocity = Vector(0, 0, 0);
-
-float gravity = -9.81;
-float targetHeight = 250;
 
 unsigned long time = 0;
 unsigned long lastLogTime = 0;
@@ -80,6 +92,8 @@ void loop() {
   float estimatedHeight = acceleration.x * 0.5 * tMax * tMax + velocity.x * tMax + position.x;
   float deltaHeight = targetHeight - estimatedHeight;
 
+  setServoAngles(deltaHeight);
+
   if (isLogging) {
     if (newTime > lastLogTime) {
       logPositionAngle(position, angularP);
@@ -87,6 +101,13 @@ void loop() {
   }
   
   time = newTime;
+}
+
+void setServoAngles(float delta) {
+  a.write(neutralAngleA + max(min(floor(angleMultiplierA * delta), maxAngle), -maxAngle));
+  b.write(neutralAngleB - max(min(floor(angleMultiplierB * delta), maxAngle), -maxAngle));
+  c.write(neutralAngleC + max(min(floor(angleMultiplierC * delta), maxAngle), -maxAngle));
+  d.write(neutralAngleD - max(min(floor(angleMultiplierD * delta), maxAngle), -maxAngle));
 }
 
 void beginLogging() {
