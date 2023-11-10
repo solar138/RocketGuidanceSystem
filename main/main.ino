@@ -3,22 +3,33 @@
 #include <Arduino.h>
 #include <TinyMPU6050.h>
 
-#define MPU_PIN 2
 #define LOG_LENGTH 128
+#define LOG_INTERVAL 0.5
+
+// Servo pins. (Digital pins) Pins must have PWM.
+#define A_PIN 5
+#define B_PIN 6
+#define C_PIN 9
+#define D_PIN 10
+
+// MPU I2C pins SDA and SCL connect to A4 and A5 respectively for the Arduino Nano. Check with the manufacturer to determine the I2C pins for your board.
 
 #define gravity -9.81
 #define targetHeight 250
-#define velocityDelayFactor -1
+#define launchAccelThreshold 30 // minimum vertical acceleration needed to declare the rocket has launched to begin data logging and controlling.
+
+// Amount of offset to the height delta to prevent undershooting the altitude. 
+#define velocityOvershootFactor 0.08
 
 #define neutralAngleA 90
 #define neutralAngleB 90
 #define neutralAngleC 90
 #define neutralAngleD 90
 
-#define angleMultiplierA 0.01
-#define angleMultiplierB 0.01
-#define angleMultiplierC 0.01
-#define angleMultiplierD 0.01
+#define angleMultiplierA 0.08
+#define angleMultiplierB 0.08
+#define angleMultiplierC 0.08
+#define angleMultiplierD 0.08
 
 #define maxAngle 20
 
@@ -31,10 +42,10 @@ MPU6050 mpu (Wire);
 
 void setup() {
   // put your setup code here, to run once:
-  a.attach(2);
-  b.attach(3);
-  c.attach(4);
-  d.attach(5);
+  a.attach(A_PIN);
+  b.attach(B_PIN);
+  c.attach(C_PIN);
+  d.attach(D_PIN);
 
   mpu.Initialize();
   mpu.Calibrate();
@@ -71,7 +82,7 @@ void loop() {
   velocity = add(velocity, mul(acceleration, dt));
   position = add(position, mul(velocity, dt));
 
-  if (isLaunched == false && acceleration.x > 30)
+  if (isLaunched == false && acceleration.x > launchAccelThreshold)
   {
     // the rocket has launched
     isLaunched = true;
@@ -90,7 +101,7 @@ void loop() {
   // newHeight = 1/2 * a * dt^2 + v * dt + p
   float tMax = -velocity.x / acceleration.x;
   float estimatedHeight = acceleration.x * 0.5 * tMax * tMax + velocity.x * tMax + position.x;
-  float deltaHeight = targetHeight - estimatedHeight;
+  float deltaHeight = (targetHeight - estimatedHeight) - velocityOvershootFactor * velocity.x;
 
   setServoAngles(deltaHeight);
 
@@ -135,7 +146,7 @@ void logPositionAngle(Vector position, Vector angle) {
   rotationY[logIndex] = aY;
   rotationZ[logIndex] = aZ;
 
-  lastLogTime += 1e6;
+  lastLogTime += floor(LOG_INTERVAL * 1e6);
   logIndex++;
   if (logIndex > LOG_LENGTH) {
     logIndex = 0;
